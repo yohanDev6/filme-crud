@@ -308,18 +308,23 @@ public class ListarFilmes extends javax.swing.JFrame {
 
             Filme filme = new Filme(nome, autor, genero, classificacao, avaliacao);
 
-            if (filmeSelecionado != null) { // Edição
-                filme.setId(filmeSelecionado.getId());
-                filmeDAO.atualizar(filme);
-                helper.setText("Filme atualizado com sucesso.");
-                adicionarButton.setText("Adicionar");
-                filmeSelecionado = null; // Reset
-            } else { // Novo filme
-                filmeDAO.inserir(filme);
-                helper.setText("Filme salvo com sucesso.");
+            String erros = verificarCampos(filme);
+            if (erros.isEmpty()) {
+                if (filmeSelecionado != null) { // Edição
+                    filme.setId(filmeSelecionado.getId());
+                    filmeDAO.atualizar(filme);
+                    helper.setText("Filme atualizado com sucesso.");
+                    adicionarButton.setText("Adicionar");
+                    filmeSelecionado = null; // Reset
+                } else { // Novo filme
+                    filmeDAO.inserir(filme);
+                    helper.setText("Filme salvo com sucesso.");
+                }
+                anularCampos();
+                listarFilmes();
+            } else {
+                helper.setText(erros);
             }
-
-            listarFilmes();
         } catch (NumberFormatException ex) {
             helper.setText("Erro ao converter classificacao ou avaliação.");
         } catch (SQLException ex) {
@@ -327,6 +332,32 @@ public class ListarFilmes extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_adicionarButtonActionPerformed
 
+    private void anularCampos() {
+        nomeTextField.setText("");
+        autorTextField.setText("");
+        generoSelectList.setSelectedItem(generoSelectList.getItemAt(0));
+        classificacaoSelectList.setSelectedItem(classificacaoSelectList.getItemAt(0));
+        avaliacaoSelectList.setSelectedItem(avaliacaoSelectList.getItemAt(0));
+    }
+    
+    public String verificarCampos(Filme filme) {
+        StringBuilder sb = new StringBuilder();
+
+        if (filme.getNome().isBlank() || filme.getNome().length() > 127) {
+            sb.append("Nome não pode ser nulo ou em branco e deve ter menos de 128 caracteres.\n");
+        } else if (filme.getAutor().isBlank() || filme.getAutor().length() > 127) {
+            sb.append("Autor não pode ser nulo ou em branco e deve ter menos de 128 caracteres.\n");
+        } else if (filme.getGenero().isBlank()) {
+            sb.append("Gênero inválido. Verifique o formulário.\n");
+        } else if (filme.getClassificacao() < 0 || filme.getClassificacao() > 18) {
+            sb.append("Classificação inválida. Verifique o formulário.\n");
+        } else if (filme.getAvaliacao() < 0 || filme.getAvaliacao() > 5) {
+            sb.append("Avaliação inválida. Verifique o formulário.");
+        }
+
+        return sb.toString();
+    }
+    
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         if (filmeSelecionado != null) {
             try {
